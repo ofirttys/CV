@@ -1,0 +1,477 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   CV STYLE — Screen UI + Print/PDF (matches original Word → PDF output)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── RESET ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── SCREEN DESIGN TOKENS ───────────────────────────────────────────────────── */
+:root {
+  --ink:          #1a1a1a;
+  --ink-mid:      #444;
+  --ink-light:    #666;
+  --rule-heavy:   #111;
+  --accent:       #003B71;   /* Deep UofT navy */
+  --accent-lt:    #e8eef6;
+  --bg:           #eceef1;
+  --page-bg:      #ffffff;
+  --toolbar-h:    52px;
+  --nav-w:        196px;
+  --green:        #1a6b3a;
+  --red:          #b01c15;
+  --shadow:       0 2px 20px rgba(0,0,0,.13);
+}
+
+/* ── BASE ───────────────────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+/* ── TOOLBAR ────────────────────────────────────────────────────────────────── */
+.toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  height: var(--toolbar-h);
+  background: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+.toolbar-inner {
+  height: 100%; max-width: 1600px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; gap: 12px;
+}
+.toolbar-name {
+  color: #fff; font-family: Arial, sans-serif;
+  font-size: 13.5px; font-weight: 700; white-space: nowrap;
+}
+.toolbar-actions {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+
+/* Auth status pill */
+.auth-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: Arial, sans-serif; font-size: 11px; color: rgba(255,255,255,.8);
+}
+.auth-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #888; flex-shrink: 0;
+  transition: background .3s;
+}
+.auth-dot.connected    { background: #4caf50; }
+.auth-dot.connecting   { background: #ffc107; }
+.auth-dot.error        { background: #f44336; }
+
+/* Toolbar buttons */
+.btn-toolbar {
+  border: none; border-radius: 5px; cursor: pointer;
+  font-family: Arial, sans-serif; font-size: 12px; font-weight: 600;
+  padding: 6px 14px; transition: background .15s, opacity .15s;
+  white-space: nowrap;
+}
+.btn-auth   { background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.4); }
+.btn-auth:hover { background: rgba(255,255,255,.3); }
+.btn-save   { background: #fff; color: var(--accent); }
+.btn-save:hover:not(:disabled) { background: #e8f0fe; }
+.btn-save:disabled { opacity: .4; cursor: not-allowed; }
+.btn-export { background: #1a6b3a; color: #fff; border: none; }
+.btn-export:hover { background: #155a30; }
+
+/* ── SIDENAV ────────────────────────────────────────────────────────────────── */
+.sidenav {
+  position: fixed; top: var(--toolbar-h); left: 0; bottom: 0;
+  width: var(--nav-w); z-index: 200;
+  background: #fff; border-right: 1px solid #dde1e8;
+  overflow-y: auto; padding: 14px 0;
+}
+.sidenav-title {
+  font-family: Arial, sans-serif; font-size: 9.5px; font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase; color: #999;
+  padding: 0 14px 10px;
+}
+.sidenav ul { list-style: none; }
+.sidenav ul li a {
+  display: block; padding: 5px 14px;
+  font-family: Arial, sans-serif; font-size: 11.5px; color: var(--ink-mid);
+  text-decoration: none; border-left: 3px solid transparent;
+  transition: background .12s, color .12s, border-color .12s;
+  line-height: 1.35;
+}
+.sidenav ul li a:hover { background: var(--accent-lt); color: var(--accent); }
+.sidenav ul li.active a {
+  background: var(--accent-lt); color: var(--accent);
+  border-left-color: var(--accent); font-weight: 700;
+}
+
+/* ── TOAST ──────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 400;
+  background: #222; color: #fff;
+  font-family: Arial, sans-serif; font-size: 13px;
+  padding: 10px 20px; border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #1a6b3a; }
+.toast.error   { background: #b01c15; }
+
+/* ── CV WRAP ────────────────────────────────────────────────────────────────── */
+.cv-wrap {
+  margin-top: var(--toolbar-h);
+  margin-left: var(--nav-w);
+  padding: 28px 24px 80px;
+  min-height: calc(100vh - var(--toolbar-h));
+}
+.cv-doc {
+  max-width: 800px; margin: 0 auto;
+  background: var(--page-bg);
+  box-shadow: var(--shadow);
+  padding: 48pt 56pt 56pt 72pt;
+}
+
+/* ── LOADING STATE ──────────────────────────────────────────────────────────── */
+.cv-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 0; color: #888;
+  font-family: Arial, sans-serif; gap: 16px;
+}
+.loading-spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid #ddd; border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   CV DOCUMENT STYLES (screen)
+   These govern how the CV looks on screen — deliberately close to the PDF
+   so what you see is what you print.
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+.cv-hdr { text-align: center; margin-bottom: 16pt; }
+.cv-hdr h1 { font-size: 16pt; font-weight: bold; }
+.cv-hdr .cv-subtitle { font-size: 12pt; margin-top: 1pt; }
+.cv-hdr .cv-prepared { font-size: 10pt; margin-top: 3pt; }
+
+/* ── PAGE CONTINUATION HEADER ───────────────────────────────────────────────── */
+.page-cont-hdr {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 1px solid #aaa; padding-bottom: 3pt; margin-bottom: 12pt;
+  font-size: 10pt; color: var(--ink-mid);
+}
+.page-cont-hdr .pch-name { font-size: 10.5pt; font-weight: bold; color: var(--ink); }
+.page-cont-hdr .pch-right { text-align: right; font-size: 9.5pt; }
+.confidential { font-style: italic; color: #777; }
+
+/* ── BIO TABLE ──────────────────────────────────────────────────────────────── */
+.bio-section { margin-bottom: 18pt; }
+.bio-section > h2 {
+  font-size: 11pt; font-weight: bold; text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 2.5px solid var(--rule-heavy);
+  padding-bottom: 2pt; margin-bottom: 7pt;
+}
+.bio-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
+.bio-table td { vertical-align: top; padding: 2pt 6pt 2pt 0; }
+.bio-table td:first-child { font-weight: bold; white-space: nowrap; width: 108pt; }
+
+/* ── SECTION ────────────────────────────────────────────────────────────────── */
+.cv-sec { margin-bottom: 16pt; }
+.cv-sec-hdr {
+  display: flex; align-items: baseline; justify-content: space-between;
+  border-bottom: 2.5px solid var(--rule-heavy);
+  padding-bottom: 2pt; margin-bottom: 8pt;
+}
+.cv-sec-hdr h2 {
+  font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* ── SUBSECTION ─────────────────────────────────────────────────────────────── */
+.cv-sub { margin-bottom: 10pt; }
+.cv-sub-hdr {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 4pt;
+}
+.cv-sub-hdr h3 { font-size: 10.5pt; font-weight: bold; font-style: italic; }
+
+/* Subheadings (e.g. "CLINICAL", "Received", "PEER-REVIEWED GRANTS") */
+.sub-heading {
+  font-size: 10pt; font-weight: bold; text-transform: uppercase;
+  letter-spacing: .05em; margin: 5pt 0 3pt;
+}
+/* Group labels (institution names under admin) */
+.group-label {
+  font-size: 10.5pt; font-weight: bold;
+  text-decoration: underline; margin: 5pt 0 2pt;
+}
+
+/* ── STANDARD ENTRY (year + body) ───────────────────────────────────────────── */
+.cv-entry {
+  display: flex; gap: 0; margin-bottom: 4pt;
+  position: relative;
+}
+.cv-entry:hover .entry-actions { opacity: 1; }
+.entry-year  { flex: 0 0 102pt; font-size: 10.5pt; padding-right: 6pt; }
+.entry-body  { flex: 1; font-size: 10.5pt; }
+.entry-notes { margin-top: 2pt; font-size: 10pt; color: var(--ink-mid); white-space: pre-line; }
+
+/* ── PUBLICATION ENTRY ──────────────────────────────────────────────────────── */
+.pub-entry {
+  display: flex; gap: 5pt; margin-bottom: 4pt; position: relative;
+}
+.pub-entry:hover .entry-actions { opacity: 1; }
+.pub-num  { flex: 0 0 18pt; font-size: 10.5pt; text-align: right; }
+.pub-body { flex: 1; font-size: 10.5pt; }
+.pub-annotation {
+  margin: 3pt 0 6pt 23pt;
+  font-size: 10pt; color: var(--ink-mid); white-space: pre-line;
+}
+
+/* ── PRESENTATION ENTRY ─────────────────────────────────────────────────────── */
+.pres-entry {
+  display: flex; gap: 0; margin-bottom: 4pt; position: relative;
+}
+.pres-entry:hover .entry-actions { opacity: 1; }
+.pres-date { flex: 0 0 102pt; font-size: 10.5pt; }
+.pres-body { flex: 1; font-size: 10.5pt; }
+
+/* ── NARRATIVE ──────────────────────────────────────────────────────────────── */
+.cv-narrative { font-size: 10.5pt; text-align: justify; }
+.cv-narrative p { margin-bottom: 6pt; }
+
+/* ── SIMPLE CONTENT ─────────────────────────────────────────────────────────── */
+.cv-simple { font-size: 10.5pt; margin-bottom: 8pt; }
+
+/* ── ENTRY ACTION BUTTONS ───────────────────────────────────────────────────── */
+.entry-actions {
+  position: absolute; right: -68px; top: 0;
+  display: flex; gap: 4px; opacity: 0;
+  transition: opacity .15s;
+}
+
+/* ── BUTTONS (general) ──────────────────────────────────────────────────────── */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 4px;
+  border: 1px solid transparent; cursor: pointer;
+  font-size: 12px; line-height: 1;
+  font-family: Arial, sans-serif;
+  transition: background .12s, color .12s;
+}
+.btn-edit { background: #e8eef5; color: var(--accent); border-color: #b8cfe8; }
+.btn-edit:hover { background: var(--accent); color: #fff; }
+.btn-add  { background: #e6f4ec; color: var(--green); border-color: #a8d4b5; }
+.btn-add:hover  { background: var(--green); color: #fff; }
+.btn-del  { background: #fdecea; color: var(--red); border-color: #f0b0ab; }
+.btn-del:hover  { background: var(--red); color: #fff; }
+
+/* ── MODALS ─────────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff; border-radius: 10px;
+  box-shadow: 0 12px 50px rgba(0,0,0,.3);
+  max-height: 88vh; display: flex; flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+.modal-export  { width: min(620px, 96vw); }
+.modal-edit    { width: min(660px, 96vw); }
+.modal-confirm { width: min(420px, 96vw); }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 22px; border-bottom: 1px solid #e8e8e8;
+}
+.modal-header h2 { font-size: 16px; font-weight: 700; color: var(--ink); }
+.modal-close {
+  background: none; border: none; font-size: 18px; cursor: pointer;
+  color: #888; padding: 4px; line-height: 1; border-radius: 4px;
+}
+.modal-close:hover { color: var(--red); background: #fdecea; }
+
+.modal-body   { padding: 18px 22px; overflow-y: auto; flex: 1; }
+.modal-footer {
+  padding: 14px 22px; border-top: 1px solid #e8e8e8;
+  display: flex; gap: 10px; justify-content: flex-end; align-items: center;
+}
+
+.modal-hint { font-size: 13px; color: #555; margin-bottom: 14px; line-height: 1.5; }
+
+/* Export checkbox tree */
+.export-controls { display: flex; gap: 14px; margin-bottom: 12px; }
+.btn-link {
+  background: none; border: none; color: var(--accent);
+  font-size: 12px; text-decoration: underline; cursor: pointer;
+  padding: 0; font-family: Arial, sans-serif;
+}
+.export-tree { font-size: 13px; }
+.chk-sec-wrap { margin-bottom: 6px; }
+.chk-sec-label {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; cursor: pointer;
+  padding: 4px 8px; border-radius: 4px;
+}
+.chk-sec-label:hover { background: #f4f4f4; }
+.chk-subs { margin-left: 24px; }
+.chk-sub-label {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 400; color: #444; cursor: pointer;
+  padding: 3px 8px; border-radius: 4px; font-size: 12px;
+}
+.chk-sub-label:hover { background: #f8f8f8; }
+input[type=checkbox] { accent-color: var(--accent); }
+
+/* Edit form */
+.edit-form { display: flex; flex-direction: column; gap: 14px; }
+.edit-field { display: flex; flex-direction: column; gap: 5px; }
+.edit-field label {
+  font-size: 11px; font-weight: 700; color: #555;
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.edit-field input[type=text],
+.edit-field textarea {
+  border: 1px solid #ccc; border-radius: 5px; padding: 8px 10px;
+  font-family: "Times New Roman", serif; font-size: 10.5pt;
+  width: 100%; color: var(--ink); resize: vertical;
+  transition: border-color .15s, box-shadow .15s;
+}
+.edit-field input:focus,
+.edit-field textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,59,113,.12);
+}
+.edit-field textarea          { min-height: 90px; }
+.edit-field textarea.tall     { min-height: 220px; }
+.edit-field textarea.very-tall{ min-height: 320px; }
+
+/* Buttons */
+.btn-primary {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 5px; padding: 8px 20px;
+  font-family: Arial, sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+.btn-primary:hover { background: #00509e; }
+.btn-secondary {
+  background: #efefef; color: var(--ink); border: 1px solid #ccc;
+  border-radius: 5px; padding: 8px 18px;
+  font-family: Arial, sans-serif; font-size: 13px;
+  cursor: pointer; transition: background .15s;
+}
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-danger {
+  background: var(--red); color: #fff; border: none;
+  border-radius: 5px; padding: 8px 18px;
+  font-family: Arial, sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.btn-danger:hover { background: #8e1510; }
+
+/* ── SCROLLBAR ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   PRINT / PDF STYLES
+   Goal: visually identical to the original Word → PDF output.
+   Everything UI-related vanishes. Document layout matches Word exactly.
+   ════════════════════════════════════════════════════════════════════════════════ */
+@media print {
+
+  /* ── Page setup ── */
+  @page {
+    size: letter;
+    margin: 1in 1in 1in 1.25in; /* matches Word margins: Top 1", Bottom 1", Left 1.25", Right 1" */
+  }
+
+  /* ── Hide everything UI ── */
+  .no-print,
+  .toolbar,
+  .sidenav,
+  .toast,
+  .entry-actions,
+  .btn-icon,
+  .btn-add,
+  .btn-edit,
+  .btn-del,
+  [data-action] {
+    display: none !important;
+  }
+
+  /* ── Reset layout ── */
+  html, body { background: #fff !important; font-size: 11pt; }
+  .cv-wrap { margin: 0 !important; padding: 0 !important; }
+  .cv-doc {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;    /* @page margins handle spacing */
+    box-shadow: none !important;
+  }
+
+  /* ── Typography — match Word default ── */
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11pt;
+    color: #000;
+    line-height: 1.35;
+  }
+
+  /* ── Hidden sections (export filter) ── */
+  .print-hidden { display: none !important; }
+
+  /* ── Colours → black ── */
+  .ink-mid, .entry-notes, .pub-annotation, .pch-right,
+  .bio-table td, .cv-narrative, .cv-simple, .pres-body,
+  .pub-body, .entry-body { color: #000 !important; }
+
+  .confidential { color: #555 !important; }
+  .cv-sec-hdr h2, .bio-section > h2 { color: #000 !important; }
+  border-bottom { border-color: #000 !important; }
+
+  /* ── Page breaks ── */
+  .page-cont-hdr { break-before: auto; }
+  .cv-sec        { break-inside: avoid-page; }
+  .cv-sub        { break-inside: avoid; }
+  .cv-sec-hdr    { break-after: avoid; }
+  .cv-sub-hdr    { break-after: avoid; }
+  .cv-entry      { break-inside: avoid; }
+  .pub-entry     { break-inside: avoid; }
+  .pres-entry    { break-inside: avoid; }
+  h2, h3         { break-after: avoid; }
+
+  /* ── Header (repeated on continuation pages) ── */
+  .page-cont-hdr {
+    display: flex !important;
+    justify-content: space-between;
+    border-bottom: 1pt solid #888;
+    padding-bottom: 4pt;
+    margin-bottom: 10pt;
+    font-size: 10pt;
+  }
+  .page-cont-hdr .pch-name { font-weight: bold; font-size: 10.5pt; }
+
+  /* ── Section headings ── */
+  .cv-sec-hdr {
+    border-bottom: 2pt solid #000;
+    padding-bottom: 2pt;
+    margin-bottom: 7pt;
+  }
+  .cv-sec-hdr h2 { font-size: 11pt; text-transform: uppercase; letter-spacing: .04em; }
+  .bio-section > h2 { border-bottom: 2pt solid #000; padding-bottom: 2pt; margin-bottom: 6pt; }
+
+  /* ── Links: print as plain text ── */
+  a { color: #000 !important; text-decoration: none !important; }
+}
