@@ -8,29 +8,28 @@
 </head>
 <body>
 
-  <!-- ── TOOLBAR (screen only) ────────────────────────────────────────────── -->
+  <!-- ── TOOLBAR ──────────────────────────────────────────────────────────── -->
   <div class="toolbar no-print" id="toolbar">
     <div class="toolbar-inner">
       <span class="toolbar-name">Dr. Jennia Michaeli, MD — CV</span>
       <div class="toolbar-actions">
         <div class="auth-status" id="authStatus">
           <span class="auth-dot" id="authDot"></span>
-          <span id="authLabel">Not connected</span>
+          <span id="authLabel">Loading…</span>
         </div>
-        <button class="btn-toolbar btn-auth" id="btnAuth">Connect Google Drive</button>
         <button class="btn-toolbar btn-save" id="btnSave" disabled title="Save changes to Google Drive">💾 Save</button>
         <button class="btn-toolbar btn-export" id="btnExport">⬇ Export PDF</button>
       </div>
     </div>
   </div>
 
-  <!-- ── SIDE NAV (screen only) ───────────────────────────────────────────── -->
+  <!-- ── SIDE NAV ─────────────────────────────────────────────────────────── -->
   <nav class="sidenav no-print" id="sidenav">
     <div class="sidenav-title">Sections</div>
     <ul id="sidenavList"></ul>
   </nav>
 
-  <!-- ── SAVE STATUS TOAST ────────────────────────────────────────────────── -->
+  <!-- ── TOAST ────────────────────────────────────────────────────────────── -->
   <div class="toast no-print" id="toast"></div>
 
   <!-- ── MAIN CV DOCUMENT ─────────────────────────────────────────────────── -->
@@ -51,7 +50,7 @@
         <button class="modal-close" id="exportModalClose">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-hint">Uncheck any sections to exclude them from the exported PDF, then click <strong>Print / Save PDF</strong>. Use Chrome's "Save as PDF" destination for best results.</p>
+        <p class="modal-hint">Uncheck any sections to exclude them from the exported PDF, then click <strong>Print / Save PDF</strong>. Use Chrome → Save as PDF for best results.</p>
         <div class="export-controls">
           <button class="btn-link" id="exportSelectAll">Select all</button>
           <button class="btn-link" id="exportDeselectAll">Deselect all</button>
@@ -96,7 +95,6 @@
     </div>
   </div>
 
-  <!-- Scripts: config first, then data, then modules -->
   <script src="cv-config.js"></script>
   <script src="cv-data.js"></script>
   <script src="cv-drive.js"></script>
