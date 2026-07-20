@@ -89,7 +89,7 @@ const CVDrive = (() => {
     const challenge = await sha256Base64url(verifier);
     sessionStorage.setItem(VERIFIER_KEY, verifier);
 
-    const redirectUri = window.location.origin + window.location.pathname;
+    const redirectUri = window.CV_CONFIG.REDIRECT_URI;
 
     const params = new URLSearchParams({
       client_id:             cfg.GOOGLE_CLIENT_ID,
@@ -108,7 +108,7 @@ const CVDrive = (() => {
   async function handleCallback(code) {
     const cfg       = window.CV_CONFIG;
     const verifier  = sessionStorage.getItem(VERIFIER_KEY);
-    const redirectUri = window.location.origin + window.location.pathname;
+    const redirectUri = window.CV_CONFIG.REDIRECT_URI;
 
     if (!verifier) {
       setStatus('error', 'Auth error — try again');

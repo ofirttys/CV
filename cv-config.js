@@ -2,7 +2,6 @@
 
 window.CV_CONFIG = {
   // ── GOOGLE DRIVE OAUTH ───────────────────────────────────────────────────
-  // Paste your OAuth 2.0 Client ID here after completing the Google Cloud setup
   GOOGLE_CLIENT_ID: '383622687958-iqv3cbabbvi3jjru7fikhlph2h1nd3g9.apps.googleusercontent.com',
 
   // The filename that will be created/read in the root of your Google Drive
@@ -13,4 +12,8 @@ window.CV_CONFIG = {
 
   // The origin your app is hosted at
   AUTHORIZED_ORIGIN: 'https://cv.michaeli.ca',
+
+  // Must match EXACTLY what is registered in Google Cloud Console → Authorized redirect URIs
+  // Make sure both https://cv.michaeli.ca and https://cv.michaeli.ca/ are in the console
+  REDIRECT_URI: 'https://cv.michaeli.ca/',
 };
