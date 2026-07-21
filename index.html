@@ -18,7 +18,7 @@
           <span id="authLabel">Loading…</span>
         </div>
         <button class="btn-toolbar btn-save" id="btnSave" disabled title="Save changes to Google Drive">💾 Save</button>
-        <button class="btn-toolbar btn-export" id="btnExport">⬇ Export PDF</button>
+        <button class="btn-toolbar btn-export" id="btnExport">⬇ Export DOCX</button>
       </div>
     </div>
   </div>
@@ -46,11 +46,11 @@
   <div class="modal-overlay" id="exportModal" aria-hidden="true">
     <div class="modal modal-export">
       <div class="modal-header">
-        <h2>Export / Print PDF</h2>
+        <h2>Export DOCX</h2>
         <button class="modal-close" id="exportModalClose">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-hint">Uncheck any sections to exclude them from the exported PDF, then click <strong>Print / Save PDF</strong>. Use Chrome → Save as PDF for best results.</p>
+        <p class="modal-hint">Select the sections to include in the exported Word document. Section numbering will update automatically based on your selection.</p>
         <div class="export-controls">
           <button class="btn-link" id="exportSelectAll">Select all</button>
           <button class="btn-link" id="exportDeselectAll">Deselect all</button>
@@ -59,7 +59,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" id="exportCancel">Cancel</button>
-        <button class="btn-primary" id="exportPrint">🖨 Print / Save PDF</button>
+        <button class="btn-primary" id="exportDownload">⬇ Download DOCX</button>
       </div>
     </div>
   </div>

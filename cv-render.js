@@ -81,6 +81,12 @@ const CVRender = (() => {
     const s = d.sections;
     let h = '';
 
+    // ── Document title header (always shown) ──
+    h += `<div class="cv-hdr">
+      <h1>${e(d.meta.name)}</h1>
+      <div class="cv-subtitle">${e(d.meta.title)}</div>
+    </div>`;
+
     // ── A. Date prepared ──
     h += `<div class="cv-sec" id="section-section_a">
       <div class="cv-sec-hdr">
@@ -90,8 +96,7 @@ const CVRender = (() => {
     </div>`;
 
     // ── B. Biographical ──
-    h += `<div class="cv-hdr"><h1>${e(d.meta.name)}</h1><div class="cv-subtitle">${e(d.meta.title)}</div></div>
-    <div class="cv-sec" id="section-section_b">
+    h += `<div class="cv-sec" id="section-section_b">
       ${secHdr('B. Biographical Information','meta',false)}
       <table class="bio-table">
         <tr><td>Primary Office</td><td style="white-space:pre-line">${e(d.meta.contact.office)}</td></tr>

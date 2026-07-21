@@ -3,24 +3,19 @@
 
 const CVExport = (() => {
 
-  // ── TREE DEFINITION ────────────────────────────────────────────────────────
-  // id: key sent to Apps Script in ?include= param
-  // label: shown in checkbox UI
-  // subs: sub-sections (can have further items)
-
   const TREE = [
     { id:'section_a',  label:'A. Date Prepared', subs:[] },
     { id:'section_b',  label:'B. Biographical Information', subs:[] },
     { id:'education',  label:'1. Education', subs:[
-      { id:'education_degrees',       label:'Degrees' },
-      { id:'education_postgrad',      label:'Postgraduate Training' },
-      { id:'education_qualifications',label:'Qualifications & Licenses' },
+      { id:'education_degrees',        label:'Degrees' },
+      { id:'education_postgrad',       label:'Postgraduate Training' },
+      { id:'education_qualifications', label:'Qualifications & Licenses' },
     ]},
     { id:'employment', label:'2. Employment', subs:[
       { id:'employment_current',  label:'Current Appointments' },
       { id:'employment_previous', label:'Previous Appointments' },
     ]},
-    { id:'honours',    label:'3. Honours & Career Awards', subs:[
+    { id:'honours', label:'3. Honours & Career Awards', subs:[
       { id:'honours_distinctions', label:'Distinctions & Research Awards' },
       { id:'honours_teaching',     label:'Teaching Awards' },
       { id:'honours_student',      label:'Student/Trainee Awards' },
@@ -61,7 +56,7 @@ const CVExport = (() => {
 
   const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  // ── RENDER CHECKBOX TREE ───────────────────────────────────────────────────
+  // ── RENDER TREE ────────────────────────────────────────────────────────────
 
   function renderTree() {
     const container = document.getElementById('exportCheckboxTree');
@@ -87,14 +82,12 @@ const CVExport = (() => {
     h += '</div>';
     container.innerHTML = h;
 
-    // Parent → children sync
     container.querySelectorAll('.chk-sec').forEach(chk => {
       chk.addEventListener('change', () => {
         container.querySelectorAll(`.chk-sub[data-parent="${chk.dataset.id}"]`)
           .forEach(c => { c.checked = chk.checked; });
       });
     });
-    // Child → parent indeterminate
     container.querySelectorAll('.chk-sub').forEach(chk => {
       chk.addEventListener('change', () => {
         const parent = container.querySelector(`.chk-sec[data-id="${chk.dataset.parent}"]`);
@@ -105,8 +98,6 @@ const CVExport = (() => {
       });
     });
   }
-
-  // ── COLLECT SELECTED IDS ───────────────────────────────────────────────────
 
   function getSelectedIds() {
     const selected = [];
@@ -122,43 +113,51 @@ const CVExport = (() => {
     });
   }
 
-  // ── DOWNLOAD DOCX ─────────────────────────────────────────────────────────
+  // ── DOWNLOAD DOCX (two-step: export → download) ────────────────────────────
 
   async function downloadDocx(selectedIds) {
     const url = window.CV_CONFIG.APPS_SCRIPT_URL;
-    const include = selectedIds.join(',');
-    const exportUrl = url + '?action=export&include=' + encodeURIComponent(include);
-
-    const btn = document.getElementById('exportPrint');
+    const btn = document.getElementById('exportDownload');
     const orig = btn.textContent;
-    btn.textContent = '⏳ Generating DOCX…';
-    btn.disabled = true;
+
+    function setLoading(msg) {
+      btn.textContent = msg;
+      btn.disabled = true;
+    }
+    function resetBtn() {
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
 
     try {
-      const resp = await fetch(exportUrl, { redirect: 'follow' });
-      if (!resp.ok) throw new Error('Server error: ' + resp.status);
+      // Step 1: Build the DOCX on the server, get back a fileId
+      setLoading('⏳ Building document…');
+      const include = selectedIds.join(',');
+      const exportUrl = url + '?action=export&include=' + encodeURIComponent(include);
 
-      const text = await resp.text();
+      const exportResp = await fetch(exportUrl, { redirect: 'follow' });
+      if (!exportResp.ok) throw new Error('Server error ' + exportResp.status);
+      const exportResult = await exportResp.json();
+      if (exportResult.error) throw new Error(exportResult.error);
 
-      // Check for JSON error response
-      try {
-        const json = JSON.parse(text);
-        if (json.error) throw new Error(json.error);
-      } catch(e) {
-        if (e.message && e.message.startsWith('Server')) throw e;
-        // Not JSON — it's our byte array
-      }
+      // Step 2: Fetch the file as base64
+      setLoading('⏳ Downloading…');
+      const downloadUrl = url + '?action=download&fileId=' + encodeURIComponent(exportResult.fileId);
+      const dlResp = await fetch(downloadUrl, { redirect: 'follow' });
+      if (!dlResp.ok) throw new Error('Download error ' + dlResp.status);
+      const dlResult = await dlResp.json();
+      if (dlResult.error) throw new Error(dlResult.error);
 
-      // Convert comma-separated byte values back to Uint8Array
-      const bytes = new Uint8Array(text.split(',').map(Number));
+      // Step 3: Decode base64 and trigger browser download
+      const binary = atob(dlResult.base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const blob = new Blob([bytes], {
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
-
-      // Trigger download
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'CV_Jennia_Michaeli_' + new Date().toISOString().slice(0,10) + '.docx';
+      a.download = exportResult.filename || dlResult.filename || 'CV_Jennia_Michaeli.docx';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -166,46 +165,33 @@ const CVExport = (() => {
 
       CVDrive.showToast('DOCX downloaded successfully', 'success');
 
-    } catch(e) {
-      console.error('Export error:', e);
-      CVDrive.showToast('Export failed: ' + e.message, 'error');
+    } catch(err) {
+      console.error('Export error:', err);
+      CVDrive.showToast('Export failed: ' + err.message, 'error');
     } finally {
-      btn.textContent = orig;
-      btn.disabled = false;
+      resetBtn();
     }
   }
 
   // ── INIT ──────────────────────────────────────────────────────────────────
 
   function init() {
-    const modal    = document.getElementById('exportModal');
-    const btnOpen  = document.getElementById('btnExport');
-    const btnClose = document.getElementById('exportModalClose');
-    const btnCancel= document.getElementById('exportCancel');
-    const btnPrint = document.getElementById('exportPrint');
-    const btnAll   = document.getElementById('exportSelectAll');
-    const btnNone  = document.getElementById('exportDeselectAll');
+    const modal     = document.getElementById('exportModal');
+    const btnOpen   = document.getElementById('btnExport');
+    const btnClose  = document.getElementById('exportModalClose');
+    const btnCancel = document.getElementById('exportCancel');
+    const btnAll    = document.getElementById('exportSelectAll');
+    const btnNone   = document.getElementById('exportDeselectAll');
 
-    // Update button label
-    btnPrint.textContent = '⬇ Download DOCX';
-
-    btnOpen.addEventListener('click', () => {
-      renderTree();
-      modal.classList.add('open');
-    });
-
+    btnOpen.addEventListener('click', () => { renderTree(); modal.classList.add('open'); });
     [btnClose, btnCancel].forEach(b => b.addEventListener('click', () => modal.classList.remove('open')));
-    modal.addEventListener('click', e => { if (e.target===modal) modal.classList.remove('open'); });
-
+    modal.addEventListener('click', ev => { if (ev.target === modal) modal.classList.remove('open'); });
     btnAll.addEventListener('click',  () => setAll(true));
     btnNone.addEventListener('click', () => setAll(false));
 
-    btnPrint.addEventListener('click', () => {
+    document.getElementById('exportDownload').addEventListener('click', () => {
       const selected = getSelectedIds();
-      if (!selected.length) {
-        alert('Please select at least one section.');
-        return;
-      }
+      if (!selected.length) { alert('Please select at least one section.'); return; }
       modal.classList.remove('open');
       downloadDocx(selected);
     });
