@@ -475,3 +475,24 @@ input[type=checkbox] { accent-color: var(--accent); }
   /* ── Links: print as plain text ── */
   a { color: #000 !important; text-decoration: none !important; }
 }
+
+/* ── SIDENAV SUBSECTIONS ─────────────────────────────────────────────────── */
+.nav-sub-list { list-style: none; margin: 0; }
+.sidenav ul li.nav-sec-item { margin-bottom: 1px; }
+.sidenav ul li a.nav-sec {
+  font-weight: 600; font-size: 11.5px;
+  border-left: 3px solid transparent;
+}
+.sidenav ul li a.nav-sub {
+  font-size: 10.5px; color: #777;
+  padding: 3px 14px 3px 24px;
+  border-left: 3px solid transparent;
+  display: block; text-decoration: none;
+  transition: background .12s, color .12s;
+}
+.sidenav ul li a.nav-sub:hover { background: var(--accent-lt); color: var(--accent); }
+.sidenav ul li a.active { background: var(--accent-lt) !important; color: var(--accent) !important; border-left-color: var(--accent) !important; font-weight: 700; }
+
+/* ── ADD ROW ─────────────────────────────────────────────────────────────── */
+.add-row { display: flex; align-items: center; gap: 6px; margin: 3pt 0 5pt; }
+.add-row-label { font-family: Arial, sans-serif; font-size: 11px; color: #999; }
