@@ -1,6 +1,6 @@
 const {
-  Document, Packer, Paragraph, TextRun, Tab, Table, TableRow, TableCell,
-  Header, Footer, PageNumber, PageNumberElement, AlignmentType, HeadingLevel, BorderStyle,
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  Header, Footer, PageNumber, SimpleField, AlignmentType, HeadingLevel, BorderStyle,
   WidthType, TabStopType, TabStopPosition, NumberFormat, TableLayoutType,
   convertInchesToTwip, UnderlineType, PageBreak
 } = require('docx');
@@ -477,9 +477,9 @@ function makeHeader(name, date) {
         border:  { bottom: { style: BorderStyle.SINGLE, size: 6, space: 4, color: '888888' } },
         tabStops: [{ type: TabStopType.RIGHT, position: TEXT_W }],
         children: [
-          run(name, { bold: true, size: HDR_SZ }),
-          new Tab(),
-          run(date + '    CONFIDENTIAL DOCUMENT', { size: HDR_SZ, italics: true, color: '666666' }),
+          new TextRun({ text: name, font: TNR, size: HDR_SZ, bold: true }),
+          new TextRun({ text: '\t', font: TNR, size: HDR_SZ }),
+          new TextRun({ text: date + '    CONFIDENTIAL DOCUMENT', font: TNR, size: HDR_SZ, italics: true, color: '666666' }),
         ],
       }),
     ],
@@ -493,11 +493,11 @@ function makeFooter(date) {
         alignment: AlignmentType.CENTER,
         spacing: { before: 0, after: 0 },
         children: [
-          run('Page ', { size: HDR_SZ }),
-          new PageNumberElement({ pageNumberType: PageNumber.CURRENT, font: TNR, size: HDR_SZ }),
-          run(' of ', { size: HDR_SZ }),
-          new PageNumberElement({ pageNumberType: PageNumber.TOTAL_PAGES, font: TNR, size: HDR_SZ }),
-          run('     ' + date + '     CONFIDENTIAL DOCUMENT', { size: HDR_SZ, italics: true, color: '666666' }),
+          new TextRun({ text: 'Page ', font: TNR, size: HDR_SZ }),
+          new SimpleField(' PAGE '),
+          new TextRun({ text: ' of ', font: TNR, size: HDR_SZ }),
+          new SimpleField(' NUMPAGES '),
+          new TextRun({ text: '     ' + date + '     CONFIDENTIAL DOCUMENT', font: TNR, size: HDR_SZ, italics: true, color: '666666' }),
         ],
       }),
     ],
