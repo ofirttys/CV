@@ -113,51 +113,34 @@ const CVExport = (() => {
     });
   }
 
-  // ── DOWNLOAD DOCX (two-step: export → download) ────────────────────────────
+  // ── DOWNLOAD DOCX via Netlify Function ───────────────────────────────────
 
   async function downloadDocx(selectedIds) {
-    const url = window.CV_CONFIG.APPS_SCRIPT_URL;
     const btn = document.getElementById('exportDownload');
     const orig = btn.textContent;
-
-    function setLoading(msg) {
-      btn.textContent = msg;
-      btn.disabled = true;
-    }
-    function resetBtn() {
-      btn.textContent = orig;
-      btn.disabled = false;
-    }
+    btn.textContent = '⏳ Building document…';
+    btn.disabled = true;
 
     try {
-      // Step 1: Build the DOCX on the server, get back a fileId
-      setLoading('⏳ Building document…');
-      const include = selectedIds.join(',');
-      const exportUrl = url + '?action=export&include=' + encodeURIComponent(include);
-
-      const exportResp = await fetch(exportUrl, { redirect: 'follow' });
-      if (!exportResp.ok) throw new Error('Server error ' + exportResp.status);
-      const exportResult = await exportResp.json();
-      if (exportResult.error) throw new Error(exportResult.error);
-
-      // Step 2: Fetch the file as base64
-      setLoading('⏳ Downloading…');
-      const downloadUrl = url + '?action=download&fileId=' + encodeURIComponent(exportResult.fileId);
-      const dlResp = await fetch(downloadUrl, { redirect: 'follow' });
-      if (!dlResp.ok) throw new Error('Download error ' + dlResp.status);
-      const dlResult = await dlResp.json();
-      if (dlResult.error) throw new Error(dlResult.error);
-
-      // Step 3: Decode base64 and trigger browser download
-      const binary = atob(dlResult.base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const resp = await fetch('/.netlify/functions/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cvData: { meta: window.CV_DATA.meta, sections: window.CV_DATA.sections },
+          included: selectedIds,
+        }),
       });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'HTTP ' + resp.status }));
+        throw new Error(err.error || 'Export failed');
+      }
+
+      const blob = await resp.blob();
+      const date = new Date().toISOString().slice(0,10);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = exportResult.filename || dlResult.filename || 'CV_Jennia_Michaeli.docx';
+      a.download = 'CV_Jennia_Michaeli_' + date + '.docx';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -169,7 +152,8 @@ const CVExport = (() => {
       console.error('Export error:', err);
       CVDrive.showToast('Export failed: ' + err.message, 'error');
     } finally {
-      resetBtn();
+      btn.textContent = orig;
+      btn.disabled = false;
     }
   }
 

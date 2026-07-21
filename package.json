@@ -1,0 +1,8 @@
+{
+  "name": "jennia-cv",
+  "version": "1.0.0",
+  "description": "Dr. Jennia Michaeli CV",
+  "dependencies": {
+    "docx": "^9.7.1"
+  }
+}
