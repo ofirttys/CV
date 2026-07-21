@@ -506,3 +506,18 @@ input[type=checkbox] { accent-color: var(--accent); }
 [id^="sub-"] {
   scroll-margin-top: calc(var(--toolbar-h) + 16px);
 }
+
+/* ── MOVE BUTTONS ────────────────────────────────────────────────────────── */
+.btn-move {
+  background: #f0f0f0; color: #666; border-color: #ddd;
+}
+.btn-move:hover { background: #ddd; color: #333; }
+
+/* Placeholder to keep actions aligned when up/down not available */
+.btn-icon-placeholder {
+  display: inline-flex; width: 24px; height: 24px;
+}
+
+/* Bio table actions column */
+.bio-actions { width: 28px; text-align: right; vertical-align: middle; }
+.bio-label { font-weight: bold; white-space: nowrap; width: 108pt; }
