@@ -104,7 +104,42 @@ const CVEdit = (() => {
       }
       if (section === 'academic_profile') return { content: s.academic_profile.subsections[sub].content };
       if (section === 'patents')          return { content: s.patents.content };
-      if (section === 'supervision')      return s.supervision.items.find(i => i.id === itemId) || null;
+      if (section === 'supervision') {
+        const item = s.supervision.items.find(i => i.id === itemId) || null;
+        if (!item) return null;
+        // If already has structured fields, return as-is
+        if (item.name) return item;
+        // Parse old format: "Supervisor, Jane Doe, Student's Current Position: X, Student's Current Institution: Y."
+        const parsed = { years: item.years || '', role: '', name: '', position: '', institution: '', project: '', collaborators: '' };
+        const title = item.title || '';
+        // Extract role (first word/phrase before first comma if it's Supervisor/Co-Supervisor)
+        const roleMatch = title.match(/^((?:Co-)?Supervisor),\s*/i);
+        if (roleMatch) {
+          parsed.role = roleMatch[1];
+          const rest = title.slice(roleMatch[0].length);
+          // Extract name (before next comma or "Student's")
+          const nameMatch = rest.match(/^([^,]+?)(?:,\s*Student|$)/);
+          parsed.name = nameMatch ? nameMatch[1].trim() : rest.split(',')[0].trim();
+          // Extract position
+          const posMatch = title.match(/Student's Current Position:\s*([^,\.]+)/i);
+          parsed.position = posMatch ? posMatch[1].trim() : '';
+          // Extract institution
+          const instMatch = title.match(/Student's Current Institution:\s*([^\.]+)/i);
+          parsed.institution = instMatch ? instMatch[1].trim() : '';
+        } else {
+          parsed.name = title;
+        }
+        // Parse notes
+        const notes = item.notes || '';
+        const collabMatch = notes.match(/\nCollaborators:\s*(.+)/i);
+        if (collabMatch) {
+          parsed.collaborators = collabMatch[1].replace(/\.$/, '').trim();
+          parsed.project = notes.slice(0, notes.indexOf('\nCollaborators:')).trim();
+        } else {
+          parsed.project = notes.trim();
+        }
+        return parsed;
+      }
 
       const secObj = s[section];
       if (secObj?.subsections?.[sub]) {
@@ -153,13 +188,17 @@ const CVEdit = (() => {
     // Supervision structured fields → convert back to title/notes format for storage
     if (section === 'supervision') {
       if (action === 'add') values.id = 'sup_' + Date.now();
-      // Build title and notes from structured fields
-      const role = values.role ? values.role + ', ' : '';
-      values.title = role + values.name + (values.position ? ', Student\'s Current Position: ' + values.position : '') +
-                     (values.institution ? ', Student\'s Current Institution: ' + values.institution + '.' : '');
-      values.notes = (values.project || '') + (values.collaborators ? '\nCollaborators: ' + values.collaborators + '.' : '');
-      if (action === 'add') { s.supervision.items.unshift(values); }
-      else {
+      // Build title string matching original format
+      const rolePart = values.role ? values.role + ', ' : '';
+      const posPart  = values.position ? ', Student\'s Current Position: ' + values.position : '';
+      const instPart = values.institution ? ', Student\'s Current Institution: ' + values.institution + '.' : '';
+      values.title = rolePart + (values.name || '') + posPart + instPart;
+      // Build notes string
+      const collabPart = values.collaborators ? '\nCollaborators: ' + values.collaborators + '.' : '';
+      values.notes = (values.project || '') + collabPart;
+      if (action === 'add') {
+        s.supervision.items.unshift(values);
+      } else {
         const idx = s.supervision.items.findIndex(i => i.id === itemId);
         if (idx >= 0) Object.assign(s.supervision.items[idx], values);
       }
@@ -169,12 +208,14 @@ const CVEdit = (() => {
     // Funding structured fields → build title/notes
     if (section === 'funding') {
       if (action === 'add') values.id = 'fund_' + Date.now();
-      const roleStr = values.role ? values.role + '. ' : '';
-      values.title = roleStr + values.title + (values.funder ? '. ' + values.funder + '.' : '');
+      const roleStr  = values.role   ? values.role + '. '   : '';
+      const funderPart = values.funder ? '. ' + values.funder + '.' : '';
+      values.title = roleStr + (values.title || '') + funderPart;
       values.notes = (values.amount ? values.amount + '.\n' : '') + (values.notes || '');
+      // Fall through to generic save below
     }
 
-    if (action === 'add') values.id = section + '_' + (sub||'item') + '_' + Date.now();
+    if (action === 'add' && !values.id) values.id = section + '_' + (sub||'item') + '_' + Date.now();
 
     const secObj = s[section];
     if (!secObj) return;
